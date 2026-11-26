@@ -39,7 +39,15 @@ main{max-width:760px;margin:0 auto;padding:16px 16px 210px}
 .tool:active{transform:scale(.92)}
 #theme.spin span{display:inline-block;animation:spin .5s ease}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);transition:background-color .35s,border-color .35s}
-form.panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;margin-top:16px;animation:rise .5s .08s ease both}
+.acc{margin-top:16px;overflow:hidden;animation:rise .5s .08s ease both}
+.acc-h{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;font:inherit;font-weight:700;color:var(--text);background:none;border:0;padding:15px 16px;cursor:pointer}
+.acc-h .plus{display:inline-grid;place-items:center;width:26px;height:26px;margin-right:10px;border-radius:50%;background:var(--accent-soft);color:var(--accent-text);font-weight:800}
+.chev{color:var(--muted);transition:transform .3s ease}
+.acc.open .chev{transform:rotate(180deg)}
+.acc-body{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows .3s ease,visibility 0s .3s}
+.acc.open .acc-body{grid-template-rows:1fr;visibility:visible;transition:grid-template-rows .3s ease,visibility 0s}
+.acc-in{overflow:hidden;min-height:0}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px 16px 16px}
 form .full{grid-column:1/-1}
 label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:5px;font-weight:600}
 input{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;transition:border-color .2s,box-shadow .2s,background-color .35s}
@@ -68,6 +76,18 @@ button:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline
 .card.sel .tick{background:var(--accent);border-color:var(--accent);color:var(--on-accent);transform:scale(1.15)}
 .del{position:absolute;bottom:4px;right:6px;background:none;border:0;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:2px 8px;transition:color .2s,transform .15s}
 .del:hover{color:var(--danger);transform:scale(1.2)}
+.kebab{position:absolute;bottom:4px;right:4px;background:none;border:0;color:var(--muted);font-size:1.25rem;line-height:1;cursor:pointer;padding:4px 10px;border-radius:8px;transition:background-color .2s,color .2s}
+.kebab:hover,.kebab[aria-expanded="true"]{background:var(--line);color:var(--text)}
+.menu{position:fixed;z-index:50;min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.22);padding:6px;display:none}
+.menu.open{display:block;animation:fade .15s ease}
+.menu button{display:block;width:100%;text-align:left;font:inherit;color:var(--text);background:none;border:0;border-radius:8px;padding:10px 12px;cursor:pointer}
+.menu button:hover{background:var(--bg)}
+.menu button.dng{color:var(--danger)}
+.modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,18,22,.55)}
+.modal.open{display:flex;animation:fade .2s ease}
+.dlg{width:min(420px,100%);background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:18px;display:grid;gap:12px}
+.dlg h3{margin:0 0 2px;font-size:1.1rem}
+.dlg .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .empty{color:var(--muted);text-align:center;padding:26px 8px;grid-column:1/-1}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .btn{font:inherit;background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 14px;cursor:pointer;white-space:nowrap;transition:transform .12s,opacity .2s,background-color .2s}
@@ -118,11 +138,18 @@ tr.out{animation:out .25s ease forwards}
       <button class="tool" id="theme" type="button"><span>☾</span></button>
     </div>
   </header>
-  <form id="f" class="panel">
+  <section class="panel acc" id="acc">
+    <button class="acc-h" id="accBtn" type="button" aria-expanded="false" aria-controls="accBody">
+      <span><span class="plus">+</span><span data-t="addItem"></span></span><span class="chev">▾</span>
+    </button>
+    <div class="acc-body" id="accBody"><div class="acc-in">
+  <form id="f" class="fgrid">
     <div class="full"><label for="name" data-t="itemName"></label><input id="name" required maxlength="40" autocomplete="off"></div>
     <div class="full"><label for="val" data-t="value"></label><input id="val" type="number" step="any" required inputmode="decimal"></div>
     <button class="add" type="submit" data-t="addItem"></button>
   </form>
+    </div></div>
+  </section>
   <div class="sec"><h2 data-t="items"></h2><span id="count"></span></div>
   <div id="grid" class="grid"></div>
   <div class="sec"><h2 data-t="saved"></h2></div>
@@ -143,18 +170,33 @@ tr.out{animation:out .25s ease forwards}
   </div>
   <div class="msg" id="msg"></div>
 </div></div>
+<div class="menu" id="menu" role="menu">
+  <button type="button" id="m-edit" role="menuitem" data-t="mEdit"></button>
+  <button type="button" id="m-del" class="dng" role="menuitem" data-t="mDel"></button>
+</div>
+<div class="modal" id="modal">
+  <form class="dlg" id="ef">
+    <h3 data-t="editTitle"></h3>
+    <div><label for="ename" data-t="itemName"></label><input id="ename" required maxlength="40" autocomplete="off"></div>
+    <div><label for="evalue" data-t="value"></label><input id="evalue" type="number" step="any" required inputmode="decimal"></div>
+    <div class="btns">
+      <button class="btn" id="ecancel" type="button" data-t="cancelDlg"></button>
+      <button class="btn pri" type="submit" data-t="saveEdit"></button>
+    </div>
+  </form>
+</div>
 <script>
 var TX={
  bn:{title:"আমার আইটেম",subtitle:"আইটেম সিলেক্ট করে Avg SMV বের করুন",itemName:"আইটেমের নাম",value:"ভ্যালু (SMV)",addItem:"আইটেম যোগ করুন",items:"আইটেম",saved:"সেভ করা ডাটা",
   cancel:"বাতিল",save:"সেভ করুন",none:"এখনও কোনো আইটেম নেই। উপরে প্রথম আইটেমটি যোগ করুন।",noRec:"এখনও কিছু সেভ করা হয়নি।",pick:"এভারেজ দেখতে কার্ড সিলেক্ট করুন",
   of:function(a,b){return b+" টির মধ্যে "+a+" টি সিলেক্ট করা হয়েছে"},del:"মুছুন",done:"সেভ হয়েছে",langBtn:"EN",showData:"শো ডাটা",hideData:"ডাটা লুকান",exportData:"এক্সপোর্ট ডাটা",
   nothing:"এক্সপোর্ট করার মতো সেভ করা ডাটা নেই।",noLib:"এক্সেল লাইব্রেরি লোড হয়নি, ইন্টারনেট দেখে আবার চেষ্টা করুন।",exported:"এক্সপোর্ট হয়েছে",saveErr:"সার্ভারে সেভ করা যায়নি।",
-  stServer:"ডাটা সার্ভারের data ফোল্ডারে সেভ হচ্ছে",stLocal:"ডাটা শুধু এই ব্রাউজারে সেভ হচ্ছে",avgLbl:"এভারেজ"},
+  stServer:"ডাটা সার্ভারের data ফোল্ডারে সেভ হচ্ছে",stLocal:"ডাটা শুধু এই ব্রাউজারে সেভ হচ্ছে",avgLbl:"এভারেজ",mEdit:"এডিট",mDel:"ডিলিট",editTitle:"আইটেম এডিট করুন",saveEdit:"সেভ করুন",cancelDlg:"বাতিল",menuLabel:"অপশন"},
  en:{title:"My items",subtitle:"Select items to get the Avg SMV",itemName:"Item name",value:"Value (SMV)",addItem:"Add item",items:"Items",saved:"Saved data",
   cancel:"Clear",save:"Save",none:"No items yet. Add your first one above.",noRec:"Nothing saved yet.",pick:"Select cards to see the average",
   of:function(a,b){return a+" of "+b+" selected"},del:"Delete",done:"Saved",langBtn:"বাং",showData:"Show data",hideData:"Hide data",exportData:"Export data",
   nothing:"No saved data to export.",noLib:"Excel library did not load. Check your connection and try again.",exported:"Exported",saveErr:"Could not save to the server.",
-  stServer:"Data is saved in the server's data folder",stLocal:"Data is saved in this browser only",avgLbl:"Average"}
+  stServer:"Data is saved in the server's data folder",stLocal:"Data is saved in this browser only",avgLbl:"Average",mEdit:"Edit",mDel:"Delete",editTitle:"Edit item",saveEdit:"Save",cancelDlg:"Cancel",menuLabel:"Options"}
 };
 var API="api/data",serverOK=false,lang="bn",items=[],records=[],selected={},newId=null,newRec=null;
 function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
@@ -201,6 +243,7 @@ function applyLang(){
   updateShow();renderItems();updateBar(false);renderHist();
 }
 function renderItems(){
+  closeMenu();
   var grid=document.getElementById("grid");grid.innerHTML="";
   document.getElementById("count").textContent=items.length?String(items.length):"";
   if(!items.length){var e=document.createElement("div");e.className="empty";e.textContent=t("none");grid.appendChild(e)}
@@ -211,10 +254,10 @@ function renderItems(){
     var tk=document.createElement("div");tk.className="tick";tk.textContent="✓";c.appendChild(tk);
     var n=document.createElement("div");n.className="n";n.textContent=it.name;c.appendChild(n);
     var v=document.createElement("div");v.className="v";v.textContent=fmt(it.value);c.appendChild(v);
-    var x=document.createElement("button");x.className="del";x.type="button";x.textContent="×";x.setAttribute("aria-label",t("del")+" "+it.name);
-    x.onclick=function(ev){ev.stopPropagation();c.classList.add("out");setTimeout(function(){
-      items=items.filter(function(i){return i.id!==it.id});delete selected[it.id];persist();renderItems();updateBar(true)},230)};
-    c.appendChild(x);
+    c.dataset.id=String(it.id);
+    var k=document.createElement("button");k.className="kebab";k.type="button";k.textContent="⋮";k.setAttribute("aria-label",t("menuLabel")+" "+it.name);k.setAttribute("aria-haspopup","menu");k.setAttribute("aria-expanded","false");
+    k.onclick=function(ev){ev.stopPropagation();openMenu(k,it)};
+    c.appendChild(k);
     function toggle(){
       if(selected[it.id])delete selected[it.id];else selected[it.id]=1;
       c.classList.toggle("sel",!!selected[it.id]);c.setAttribute("aria-pressed",!!selected[it.id]);updateBar(true);
@@ -225,11 +268,42 @@ function renderItems(){
   });
   newId=null;
 }
+var menu=document.getElementById("menu"),menuBtn=null,menuItem=null;
+function closeMenu(){menu.classList.remove("open");if(menuBtn)menuBtn.setAttribute("aria-expanded","false");menuBtn=null;menuItem=null}
+function openMenu(btn,it){
+  if(menuBtn===btn){closeMenu();return}
+  closeMenu();menuBtn=btn;menuItem=it;btn.setAttribute("aria-expanded","true");
+  menu.classList.add("open");
+  var r=btn.getBoundingClientRect(),mh=menu.offsetHeight,mw=menu.offsetWidth;
+  var top=r.bottom+4;if(top+mh>window.innerHeight-170)top=r.top-mh-4;
+  menu.style.top=Math.max(8,top)+"px";
+  menu.style.left=Math.min(Math.max(8,r.right-mw),window.innerWidth-mw-8)+"px";
+}
+function deleteItem(it){
+  var c=document.querySelector('.card[data-id="'+String(it.id)+'"]');if(c)c.classList.add("out");
+  setTimeout(function(){items=items.filter(function(i){return i.id!==it.id});delete selected[it.id];persist();renderItems();updateBar(true)},230);
+}
+var modal=document.getElementById("modal"),editItem=null;
+function openEdit(it){editItem=it;document.getElementById("ename").value=it.name;document.getElementById("evalue").value=it.value;modal.classList.add("open");setTimeout(function(){document.getElementById("ename").focus()},30)}
+function closeEdit(){modal.classList.remove("open");editItem=null}
+document.getElementById("ef").onsubmit=function(e){
+  e.preventDefault();if(!editItem)return;
+  var n=document.getElementById("ename").value.trim(),v=parseFloat(document.getElementById("evalue").value);
+  if(!n||isNaN(v))return;
+  editItem.name=n;editItem.value=v;persist();closeEdit();renderItems();updateBar(true);
+};
+document.getElementById("ecancel").onclick=closeEdit;
+modal.onclick=function(e){if(e.target===modal)closeEdit()};
+document.getElementById("m-edit").onclick=function(){var it=menuItem;closeMenu();if(it)openEdit(it)};
+document.getElementById("m-del").onclick=function(){var it=menuItem;closeMenu();if(it)deleteItem(it)};
+document.addEventListener("click",function(e){if(!menu.contains(e.target))closeMenu()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){closeMenu();closeEdit()}});
+window.addEventListener("resize",closeMenu);window.addEventListener("scroll",closeMenu,true);
 function updateBar(animate){
   var sel=selItems(),avg=document.getElementById("avg"),sub=document.getElementById("sub"),btn=document.getElementById("save");
   if(sel.length){
     var sum=sel.reduce(function(a,i){return a+i.value},0);
-    avg.textContent="Avg SMV: "+fmt(sum/sel.length);sub.textContent=t("of")(sel.length,items.length);btn.disabled=false;
+    avg.textContent="Avg SMV: "+(sum/sel.length).toFixed(2);sub.textContent=t("of")(sel.length,items.length);btn.disabled=false;
   }else{avg.textContent="–";sub.textContent=t("pick");btn.disabled=true}
   if(animate){avg.classList.remove("bump");void avg.offsetWidth;avg.classList.add("bump")}
 }
@@ -244,7 +318,7 @@ function renderHist(){
   sortedRecs().forEach(function(rc,i){
     var tr=document.createElement("tr");if(rc.id===newRec)tr.className="new";
     tr.title=rc.items.map(function(x){return x.name+" ("+fmt(x.value)+")"}).join(", ");
-    [String(i+1),rc.date,fmt(rc.avg)].forEach(function(txt,k){var td=document.createElement("td");if(k===2)td.className="avg";td.textContent=txt;tr.appendChild(td)});
+    [String(i+1),rc.date,Number(rc.avg).toFixed(2)].forEach(function(txt,k){var td=document.createElement("td");if(k===2)td.className="avg";td.textContent=txt;tr.appendChild(td)});
     var ta=document.createElement("td");ta.className="act";
     var x=document.createElement("button");x.className="del";x.type="button";x.textContent="×";x.setAttribute("aria-label",t("del"));
     x.onclick=function(){tr.classList.add("out");setTimeout(function(){records=records.filter(function(q){return q.id!==rc.id});persist();renderHist()},230)};
@@ -287,7 +361,13 @@ document.getElementById("export").onclick=function(){
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Avg SMV");
   try{XLSX.writeFile(wb,"avg-smv.xlsx");flash(t("exported"))}catch(err){flash(t("noLib"))}
 };
-loadAll(applyLang);
+var acc=document.getElementById("acc");
+function setAcc(o,focus){
+  acc.classList.toggle("open",o);document.getElementById("accBtn").setAttribute("aria-expanded",o);
+  if(o&&focus)setTimeout(function(){document.getElementById("name").focus()},320);
+}
+document.getElementById("accBtn").onclick=function(){setAcc(!acc.classList.contains("open"),true)};
+loadAll(function(){if(!items.length)setAcc(true,false);applyLang()});
 </script>
 </body>
 </html>
