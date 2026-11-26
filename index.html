@@ -348,16 +348,16 @@ document.getElementById("save").onclick=function(){
 document.getElementById("export").onclick=function(){
   if(!records.length){flash(t("nothing"));return}
   if(!window.XLSX){flash(t("noLib"));return}
-  var aoa=[["No","Date","Avg SMV"]];
+  var aoa=[["No","Date","Avg SMV","Style Details"]];
   sortedRecs().forEach(function(r,i){
     var p=r.date.split("-");
     var serial=Math.round((Date.UTC(+p[0],+p[1]-1,+p[2])-Date.UTC(1899,11,30))/86400000);
-    aoa.push([i+1,serial,Number(r.avg.toFixed(2))]);
+    aoa.push([i+1,serial,Number(r.avg.toFixed(2)),(r.items||[]).map(function(x){return x.name+" ("+fmt(x.value)+")"}).join(", ")]);
   });
   var ws=XLSX.utils.aoa_to_sheet(aoa);
   for(var i=2;i<=aoa.length;i++){ws["B"+i].z="yyyy-mm-dd";ws["C"+i].z="0.00"}
-  ws["!cols"]=[{wch:8},{wch:14},{wch:12}];
-  ws["!autofilter"]={ref:"A1:C"+aoa.length};
+  ws["!cols"]=[{wch:8},{wch:14},{wch:12},{wch:70}];
+  ws["!autofilter"]={ref:"A1:D"+aoa.length};
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Avg SMV");
   try{XLSX.writeFile(wb,"avg-smv.xlsx");flash(t("exported"))}catch(err){flash(t("noLib"))}
 };
